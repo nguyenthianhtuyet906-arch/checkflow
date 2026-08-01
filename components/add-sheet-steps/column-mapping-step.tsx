@@ -163,7 +163,7 @@ export function ColumnMappingStep({
   }
 
   const getMappedFieldsCount = () => {
-    return Object.values(configuration.columnMapping).filter((value) => value.trim()).length
+    return Object.values(configuration.columnMapping).filter((value) => value?.trim()).length
   }
 
   // Load headers when component mounts or dependencies change
@@ -315,11 +315,15 @@ export function ColumnMappingStep({
                       <SelectItem value="default">
                         <span className="text-gray-500">Not mapped</span>
                       </SelectItem>
-                      {detectedHeaders.map((header, index) => (
-                        <SelectItem key={index} value={header}>
-                          {header}
-                        </SelectItem>
-                      ))}
+                      {detectedHeaders
+                        // Radix <SelectItem> throws on an empty-string value; skip blank
+                        // header cells (empty/trailing columns) and de-duplicate.
+                        .filter((header, index) => header?.trim() && detectedHeaders.indexOf(header) === index)
+                        .map((header, index) => (
+                          <SelectItem key={index} value={header}>
+                            {header}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-gray-500">{field.description}</p>
