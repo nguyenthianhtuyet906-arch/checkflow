@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
@@ -10,6 +10,10 @@ import { Badge } from "@/components/ui/badge"
 import { Loader2, CheckCircle, AlertTriangle, RefreshCw, Eye, EyeOff } from "lucide-react"
 import type { SheetConfiguration } from "../add-sheet-modal"
 import { googleSheetsClient } from "@/lib/google-sheets-client"
+
+// Sentinel for the "Not mapped" option: Radix rejects an empty <SelectItem /> value,
+// so the empty mapping needs a placeholder value that no real column header can collide with.
+const UNMAPPED_VALUE = "__unmapped__"
 
 interface ColumnMappingStepProps {
   configuration: SheetConfiguration
@@ -64,6 +68,13 @@ export function ColumnMappingStep({
   const [sampleData, setSampleData] = useState<Record<string, string>[]>([])
   const [showSampleData, setShowSampleData] = useState(false)
 
+  // Blank cells in the header row come back as "" from the Sheets API.
+  // Radix's <SelectItem /> throws on an empty value, so those columns cannot be offered.
+  const selectableHeaders = useMemo(
+    () => detectedHeaders.filter((header) => header.length > 0),
+    [detectedHeaders],
+  )
+
   const loadHeadersAndSampleData = async () => {
     if (!configuration.googleSheetId || !configuration.selectedTab) {
       return
@@ -81,7 +92,8 @@ export function ColumnMappingStep({
         throw new Error(`Failed to load headers: ${headerResponse.error}`)
       }
 
-      const headers = headerResponse.data?.values?.[0] || []
+      const rawHeaders = headerResponse.data?.values?.[0] || []
+      const headers: string[] = rawHeaders.map((header: unknown) => String(header ?? "").trim())
       setDetectedHeaders(headers)
       updateConfiguration({ detectedHeaders: headers })
 
@@ -124,8 +136,11 @@ export function ColumnMappingStep({
 
     const newMapping = { ...configuration.columnMapping }
 
+    // Skip blank headers: pattern.includes("") matches everything and would map every field to "".
+    const candidates = headers.filter((header) => header.length > 0)
+
     Object.entries(AUTO_MAPPING_PATTERNS).forEach(([fieldKey, patterns]) => {
-      const matchedHeader = headers.find((header) =>
+      const matchedHeader = candidates.find((header) =>
         patterns.some(
           (pattern) =>
             header.toLowerCase().includes(pattern.toLowerCase()) ||
@@ -145,15 +160,15 @@ export function ColumnMappingStep({
     updateConfiguration({
       columnMapping: {
         ...configuration.columnMapping,
-        [fieldKey]: headerValue,
+        [fieldKey]: headerValue === UNMAPPED_VALUE ? "" : headerValue,
       },
     })
   }
 
   const getRequiredFieldsStatus = () => {
     const requiredFields = FIELD_MAPPINGS.filter((field) => field.required)
-    const mappedRequired = requiredFields.filter(
-      (field) => configuration.columnMapping[field.key as keyof typeof configuration.columnMapping],
+    const mappedRequired = requiredFields.filter((field) =>
+      configuration.columnMapping[field.key as keyof typeof configuration.columnMapping]?.trim(),
     )
     return {
       total: requiredFields.length,
@@ -163,7 +178,7 @@ export function ColumnMappingStep({
   }
 
   const getMappedFieldsCount = () => {
-    return Object.values(configuration.columnMapping).filter((value) => value.trim()).length
+    return Object.values(configuration.columnMapping).filter((value) => value?.trim()).length
   }
 
   // Load headers when component mounts or dependencies change
@@ -172,6 +187,25 @@ export function ColumnMappingStep({
       loadHeadersAndSampleData()
     }
   }, [configuration.googleSheetId, configuration.selectedTab])
+
+  // Older configurations stored the literal "default" for unmapped fields, which made them
+  // count as mapped. Clear those once the headers show that no such column exists.
+  useEffect(() => {
+    if (detectedHeaders.length === 0 || detectedHeaders.includes("default")) {
+      return
+    }
+
+    const legacyEntries = Object.entries(configuration.columnMapping).filter(([, value]) => value === "default")
+    if (legacyEntries.length === 0) {
+      return
+    }
+
+    const newMapping = { ...configuration.columnMapping }
+    legacyEntries.forEach(([fieldKey]) => {
+      newMapping[fieldKey as keyof typeof newMapping] = ""
+    })
+    updateConfiguration({ columnMapping: newMapping })
+  }, [detectedHeaders, configuration.columnMapping])
 
   const requiredStatus = getRequiredFieldsStatus()
   const mappedCount = getMappedFieldsCount()
@@ -304,7 +338,8 @@ export function ColumnMappingStep({
                   </div>
                   <Select
                     value={
-                      configuration.columnMapping[field.key as keyof typeof configuration.columnMapping] || "default"
+                      configuration.columnMapping[field.key as keyof typeof configuration.columnMapping] ||
+                      UNMAPPED_VALUE
                     }
                     onValueChange={(value) => handleFieldMapping(field.key, value)}
                   >
@@ -312,10 +347,10 @@ export function ColumnMappingStep({
                       <SelectValue placeholder="Select column..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="default">
+                      <SelectItem value={UNMAPPED_VALUE}>
                         <span className="text-gray-500">Not mapped</span>
                       </SelectItem>
-                      {detectedHeaders.map((header, index) => (
+                      {selectableHeaders.map((header, index) => (
                         <SelectItem key={index} value={header}>
                           {header}
                         </SelectItem>
