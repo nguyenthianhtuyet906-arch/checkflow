@@ -19,10 +19,10 @@ These APIs manage the Google Sheets integration for CheckFlow, providing system-
 {
   "success": true,
   "data": {
-    "clientId": "YOUR_GOOGLE_CLIENT_ID",
-    "clientSecret": "YOUR_GOOGLE_CLIENT_SECRET",
-    "accessToken": "YOUR_ACCESS_TOKEN",
-    "refreshToken": "YOUR_REFRESH_TOKEN",
+    "clientId": "[REDACTED_GOOGLE_CLIENT_ID]",
+    "clientSecret": "[REDACTED_GOOGLE_CLIENT_SECRET]",
+    "accessToken": "[REDACTED_GOOGLE_ACCESS_TOKEN]",
+    "refreshToken": "[REDACTED_GOOGLE_REFRESH_TOKEN]",
     "expiresAt": "2024-01-15T15:30:00Z"
   }
 }

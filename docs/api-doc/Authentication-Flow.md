@@ -424,8 +424,8 @@ users (
 This simplified authentication flow provides robust security while eliminating unnecessary complexity and includes a convenient test endpoint for development.
 
 ### Default values if not loaded from ENV
-CLient ID : YOUR_GOOGLE_CLIENT_ID
-Client Secret : YOUR_GOOGLE_CLIENT_SECRET
+CLient ID : [REDACTED_GOOGLE_CLIENT_ID]
+Client Secret : [REDACTED_GOOGLE_CLIENT_SECRET]
 
 ### /login page
 - Show redirect url should be setup in gooogle console

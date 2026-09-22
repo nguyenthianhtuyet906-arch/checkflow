@@ -1,7 +1,7 @@
 // lib/env.ts
 export const GOOGLE_CLIENT_ID =
-  process.env.GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID"
-export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "YOUR_GOOGLE_CLIENT_SECRET"
+  process.env.GOOGLE_CLIENT_ID || "[REDACTED_GOOGLE_CLIENT_ID]"
+export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "[REDACTED_GOOGLE_CLIENT_SECRET]"
 export const APP_JWT_SECRET = process.env.APP_JWT_SECRET || "9i3TV7kvul3gCa5eBM4V"
 
 export const MERA_API_URL = process.env.MERA_API_URL || "https://mera-fulfill-api.pamoteam.top"
