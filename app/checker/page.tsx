@@ -16,7 +16,6 @@ import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { MultiSelect } from "@/components/ui/multi-select"
 import { ALL_STATUSES } from "@/constants/statuses"
-import { useMeraProjects } from "@/hooks/use-mera-projects"
 
 interface ReviewerStat {
   id: string
@@ -104,9 +103,7 @@ export default function CheckerPage() {
   // === Bộ lọc nguồn / sheet / project / trạng thái hiện tại (giống need-repair) ===
   const [selectedSheetIds, setSelectedSheetIds] = useState<string[]>([])
   const [selectedCurrentStatuses, setSelectedCurrentStatuses] = useState<string[]>([])
-  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([])
   const [includeSheet, setIncludeSheet] = useState(true)
-  const [includeMera, setIncludeMera] = useState(true)
 
   const { data: sheetsResp } = useApi<{ data: Array<{ google_sheet_id: string; name?: string }> }>("/sheets")
   const sheetOptions = useMemo(
@@ -118,11 +115,6 @@ export default function CheckerPage() {
     [sheetsResp],
   )
   const statusOptions = useMemo(() => ALL_STATUSES.map((s) => ({ value: s, label: s })), [])
-  const { projects: meraProjects } = useMeraProjects()
-  const projectOptions = useMemo(
-    () => meraProjects.map((p) => ({ value: p.id, label: p.name })),
-    [meraProjects],
-  )
 
   const queryParams = useMemo(() => {
     const params = new URLSearchParams()
@@ -139,9 +131,8 @@ export default function CheckerPage() {
     if (selectedReviewer) params.append("reviewerId", selectedReviewer)
     if (selectedSheetIds.length > 0) params.append("sheetIds", selectedSheetIds.join(","))
     if (selectedCurrentStatuses.length > 0) params.append("currentStatuses", selectedCurrentStatuses.join(","))
-    if (selectedProjectIds.length > 0) params.append("projectIds", selectedProjectIds.join(","))
     if (!includeSheet) params.append("includeSheet", "false")
-    if (!includeMera) params.append("includeMera", "false")
+    params.append("includeMera", "false")
 
     return params.toString()
   }, [
@@ -150,9 +141,7 @@ export default function CheckerPage() {
     selectedReviewer,
     selectedSheetIds,
     selectedCurrentStatuses,
-    selectedProjectIds,
     includeSheet,
-    includeMera,
   ])
 
   const { data: statsData, loading, error, refetch } = useApi<CheckerStatsResponse>(`/checker/stats?${queryParams}`)
@@ -469,11 +458,11 @@ export default function CheckerPage() {
           </CardContent>
         </Card>
 
-        {/* Filters: Sheet / Mera projects / Trạng thái hiện tại / Source */}
+        {/* Filters: Sheet / Trạng thái hiện tại / Source */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Filters</CardTitle>
-            <CardDescription>Lọc theo nguồn dữ liệu, sheet, project Mera, hoặc trạng thái hiện tại của đơn</CardDescription>
+            <CardDescription>Lọc theo sheet hoặc trạng thái hiện tại của đơn</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap items-center gap-4">
@@ -486,18 +475,6 @@ export default function CheckerPage() {
                   placeholder="All sheets"
                   className="w-56"
                   emptyText="No sheets"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <span className="text-xs text-gray-500 font-medium">Mera projects</span>
-                <MultiSelect
-                  options={projectOptions}
-                  value={selectedProjectIds}
-                  onChange={setSelectedProjectIds}
-                  placeholder="All projects"
-                  className="w-56"
-                  emptyText="No projects"
                 />
               </div>
 
@@ -524,15 +501,6 @@ export default function CheckerPage() {
                     className={includeSheet ? "bg-pink-600 hover:bg-pink-700 text-white" : "bg-transparent"}
                   >
                     Sheet
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={includeMera ? "default" : "outline"}
-                    onClick={() => setIncludeMera((v) => !v)}
-                    className={includeMera ? "bg-pink-600 hover:bg-pink-700 text-white" : "bg-transparent"}
-                  >
-                    Mera
                   </Button>
                 </div>
               </div>

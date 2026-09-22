@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast"
 import { OrderReviewModal } from "@/components/review/order-review-modal"
 import { googleSheetsClient } from "@/lib/google-sheets-client"
 import { clearResolvedDesignLinks } from "@/utils/design-links"
-import { RefreshCw, Database, Sheet } from "lucide-react"
+import { RefreshCw, Sheet } from "lucide-react"
 
 type DataSource = "sheets" | "mera"
 
@@ -780,37 +780,12 @@ export default function ReviewPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Order Review</h1>
-              <p className="text-gray-600 mt-2">
-                {dataSource === "sheets"
-                  ? "Select a Google Sheet and review orders for quality assurance"
-                  : "Review orders from Mera system"}
-              </p>
+              <p className="text-gray-600 mt-2">Select a Google Sheet and review orders for quality assurance</p>
             </div>
             <div className="flex items-center gap-4">
-              {/* Source toggle */}
-              <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden">
-                <button
-                  onClick={() => setDataSource("sheets")}
-                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
-                    dataSource === "sheets"
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  <Sheet className="h-4 w-4" />
-                  Google Sheets
-                </button>
-                <button
-                  onClick={() => setDataSource("mera")}
-                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
-                    dataSource === "mera"
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  <Database className="h-4 w-4" />
-                  Mera
-                </button>
+              <div className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600">
+                <Sheet className="h-4 w-4" />
+                Google Sheets
               </div>
 
               {dataSource === "sheets" && (

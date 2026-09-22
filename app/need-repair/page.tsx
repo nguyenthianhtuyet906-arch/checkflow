@@ -27,7 +27,6 @@ import {
   ArrowUpDown,
 } from "lucide-react"
 import { useApi } from "@/hooks/use-api"
-import { useMeraProjects } from "@/hooks/use-mera-projects"
 import { MultiSelect } from "@/components/ui/multi-select"
 import { ALL_STATUSES } from "@/constants/statuses"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -47,11 +46,8 @@ export default function NeedRepairPage() {
   const [selectedSheetIds, setSelectedSheetIds] = useState<string[]>([])
   // Multi-select trạng thái HIỆN TẠI của đơn (rỗng = tất cả status)
   const [selectedCurrentStatuses, setSelectedCurrentStatuses] = useState<string[]>([])
-  // Multi-select Mera projects (rỗng = tất cả)
-  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([])
-  // Bật/tắt nguồn — mặc định gộp cả 2
+  // Chỉ sử dụng dữ liệu từ Google Sheets.
   const [includeSheet, setIncludeSheet] = useState(true)
-  const [includeMera, setIncludeMera] = useState(true)
 
   // Lấy list sheet để build options cho MultiSelect
   const { data: sheetsResp } = useApi("/sheets")
@@ -65,11 +61,6 @@ export default function NeedRepairPage() {
   const statusOptions = useMemo(
     () => ALL_STATUSES.map((s) => ({ value: s, label: s })),
     [],
-  )
-  const { projects: meraProjects } = useMeraProjects()
-  const projectOptions = useMemo(
-    () => meraProjects.map((p) => ({ value: p.id, label: p.name })),
-    [meraProjects],
   )
 
   // Filter + sort cho bảng By Designer
@@ -122,9 +113,8 @@ export default function NeedRepairPage() {
     }
     if (selectedSheetIds.length > 0) params.set("sheetIds", selectedSheetIds.join(","))
     if (selectedCurrentStatuses.length > 0) params.set("currentStatuses", selectedCurrentStatuses.join(","))
-    if (selectedProjectIds.length > 0) params.set("projectIds", selectedProjectIds.join(","))
     if (!includeSheet) params.set("includeSheet", "false")
-    if (!includeMera) params.set("includeMera", "false")
+    params.set("includeMera", "false")
     return `/need-repair/stats?${params.toString()}`
   }
 
@@ -319,18 +309,6 @@ export default function NeedRepairPage() {
             </div>
 
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-gray-500 font-medium">Mera projects</span>
-              <MultiSelect
-                options={projectOptions}
-                value={selectedProjectIds}
-                onChange={setSelectedProjectIds}
-                placeholder="All projects"
-                className="w-56"
-                emptyText="No projects"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1">
               <span className="text-xs text-gray-500 font-medium">Trạng thái hiện tại</span>
               <MultiSelect
                 options={statusOptions}
@@ -353,15 +331,6 @@ export default function NeedRepairPage() {
                   className={includeSheet ? "bg-pink-600 hover:bg-pink-700 text-white" : "bg-transparent"}
                 >
                   Sheet
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={includeMera ? "default" : "outline"}
-                  onClick={() => setIncludeMera((v) => !v)}
-                  className={includeMera ? "bg-pink-600 hover:bg-pink-700 text-white" : "bg-transparent"}
-                >
-                  Mera
                 </Button>
               </div>
             </div>
